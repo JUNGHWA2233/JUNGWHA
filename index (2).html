@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>해외영업부 업무 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f5f4f0; --surface:#fff; --surface2:#f0efe9; --border:#e0ded7; --border2:#cccab8;
+  --text:#1a1916; --text2:#6b6960; --text3:#a09e95; --accent:#2a2520;
+  --reply-out-bg:#eef4ff; --reply-out-fg:#1a3a7a; --reply-out-br:#b8cef5;
+  --reply-in-bg:#fdf0dc;  --reply-in-fg:#7a4a08;  --reply-in-br:#f5cc80;
+  --sample-out-bg:#f0fdf4;--sample-out-fg:#165c2a; --sample-out-br:#a8d9b5;
+  --sample-in-bg:#fdf2f8; --sample-in-fg:#831843;  --sample-in-br:#f0abca;
+  --overdue:#c0392b; --overdue-bg:#fff0ee;
+  --mono:'DM Mono',monospace; --sans:'Noto Sans KR',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+header{background:var(--accent);color:#f5f4f0;padding:0 2rem;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.logo{font-family:var(--mono);font-size:13px;letter-spacing:.08em;font-weight:500;}
+.logo span{opacity:.45;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#4caf76;display:inline-block;margin-right:5px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.live-label{font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;}
+.header-user{font-size:12px;color:rgba(255,255,255,.8);font-family:var(--mono);}
+.set-btn{font-family:var(--sans);font-size:11px;padding:4px 10px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#f5f4f0;border-radius:4px;cursor:pointer;}
+
+.page-tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 2rem;}
+.page-tab{font-family:var(--sans);font-size:13px;font-weight:500;padding:12px 18px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-1px;}
+.page-tab:hover{color:var(--text2);}
+.page-tab.active{color:var(--text);border-bottom-color:var(--accent);}
+
+.btn-dark{display:inline-flex;align-items:center;gap:5px;background:var(--accent);color:#f5f4f0;border:none;border-radius:6px;padding:8px 14px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s;}
+.btn-dark:hover{opacity:.85;}
+.btn-light{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+
+/* 오늘 할 일 */
+#page-today{padding:1.5rem 2rem;display:none;}
+.today-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px;}
+.today-title{font-size:15px;font-weight:500;}
+.today-date{font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:2px;}
+.today-summary{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;}
+.sum-chip{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:99px;font-size:12px;font-weight:500;border:1px solid transparent;cursor:pointer;transition:opacity .15s;}
+.sum-chip:hover{opacity:.8;}
+.sum-chip.selected{outline:2.5px solid var(--accent);outline-offset:1px;font-weight:700;}
+.sum-chip .num{font-family:var(--mono);font-size:13px;font-weight:700;}
+.chip-reply-out{background:var(--reply-out-bg);color:var(--reply-out-fg);border-color:var(--reply-out-br);}
+.chip-reply-in{background:var(--reply-in-bg);color:var(--reply-in-fg);border-color:var(--reply-in-br);}
+.chip-sample-out{background:var(--sample-out-bg);color:var(--sample-out-fg);border-color:var(--sample-out-br);}
+.chip-sample-in{background:var(--sample-in-bg);color:var(--sample-in-fg);border-color:var(--sample-in-br);}
+.chip-overdue{background:var(--overdue-bg);color:var(--overdue);border-color:#f5b8b0;}
+.chip-done{background:#f0fdf4;color:#166534;border-color:#a8d9b5;}
+
+.today-sheet{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.today-sheet-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--surface2);border-bottom:1px solid var(--border);}
+.today-sheet-title{font-size:13px;font-weight:500;}
+.today-sheet-meta{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.today-buyer-block{border-bottom:1px solid var(--border);}
+.today-buyer-block:last-child{border-bottom:none;}
+.today-buyer-head{display:flex;align-items:center;gap:10px;padding:10px 18px 6px;background:var(--surface);}
+.today-buyer-name{font-size:14px;font-weight:700;}
+.today-buyer-cnt{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.today-tasks{padding:0 18px 10px;display:flex;flex-direction:column;gap:3px;}
+.today-task-row{display:flex;align-items:flex-start;gap:8px;padding:4px 6px;border-radius:6px;transition:background .1s;}
+.today-task-row:hover{background:var(--surface2);}
+.today-task-row.overdue{background:var(--overdue-bg);}
+.today-check{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border2);cursor:pointer;flex-shrink:0;margin-top:2px;appearance:none;background:var(--surface);}
+.today-check:checked{background:var(--accent);border-color:var(--accent);}
+.today-task-body{flex:1;}
+.today-task-text{font-size:13px;color:var(--text);line-height:1.5;}
+.today-task-text.done{text-decoration:line-through;opacity:.4;}
+.today-task-meta{display:flex;align-items:center;gap:6px;margin-top:1px;flex-wrap:wrap;}
+.type-badge{font-size:10px;padding:1px 6px;border-radius:3px;font-weight:600;white-space:nowrap;}
+.due-badge{font-size:10px;padding:1px 5px;border-radius:3px;font-weight:500;font-family:var(--mono);}
+.due-ok{background:#e8f5e9;color:#2e7d32;}
+.due-soon{background:#fff3e0;color:#e65100;}
+.due-over{background:var(--overdue-bg);color:var(--overdue);}
+.added-date{font-size:10px;color:var(--text3);font-family:var(--mono);}
+
+/* 바이어별 시트 */
+#page-buyers{padding:1.5rem 2rem;display:none;}
+.buyers-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px;}
+.buyer-grid{display:flex;flex-direction:column;gap:14px;}
+.buyer-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .15s;}
+.buyer-card:hover{border-color:var(--border2);}
+.buyer-card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid var(--border);}
+.buyer-name{font-size:15px;font-weight:700;}
+.buyer-head-right{display:flex;align-items:center;gap:8px;}
+.buyer-stat{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.del-buyer-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px 4px;}
+.del-buyer-btn:hover{color:#c0392b;}
+.buyer-card-body{padding:10px 14px;display:flex;flex-direction:column;gap:7px;}
+.ts-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:0 2px;opacity:.4;flex-shrink:0;margin-top:2px;}
+.ts-del:hover{opacity:1;color:#c0392b;}
+.inline-add{display:none;flex-direction:column;gap:5px;margin-top:5px;}
+.inline-add.open{display:flex;}
+.ia-row1{display:flex;gap:5px;}
+.ia-row1 input{flex:1;font-size:12px;font-family:var(--sans);border:1px solid var(--border2);border-radius:5px;padding:4px 8px;background:var(--surface);color:var(--text);}
+.ia-row1 input:focus{outline:none;border-color:var(--accent);}
+.ia-row2{display:flex;align-items:center;gap:6px;}
+.ia-row2 label{font-size:11px;color:var(--text3);}
+.ia-row2 input[type=date]{font-size:11px;font-family:var(--sans);border:1px solid var(--border);border-radius:4px;padding:3px 6px;background:var(--surface2);color:var(--text);}
+.ia-btn{font-size:12px;padding:4px 10px;background:var(--accent);color:#f5f4f0;border:none;border-radius:5px;cursor:pointer;white-space:nowrap;font-family:var(--sans);}
+
+/* 히스토리 */
+#page-history{padding:1.5rem 2rem;display:none;}
+.hist-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px;}
+.hist-filter{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.hist-filter select,.hist-filter input[type=date]{font-size:12px;font-family:var(--sans);border:1px solid var(--border);border-radius:6px;padding:5px 8px;background:var(--surface2);color:var(--text);}
+.hist-list{display:flex;flex-direction:column;gap:10px;}
+.hist-day{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.hist-day-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
+.hist-day-date{font-size:13px;font-weight:500;font-family:var(--mono);}
+.hist-day-cnt{font-size:11px;color:var(--text3);}
+.hist-day-body{padding:12px 16px;display:flex;flex-direction:column;gap:10px;}
+.hist-buyer-name{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px;}
+.hist-item{display:flex;align-items:flex-start;gap:6px;font-size:12px;padding:2px 0;}
+.hist-type-badge{font-size:10px;padding:1px 6px;border-radius:3px;font-weight:600;white-space:nowrap;flex-shrink:0;margin-top:1px;}
+.hist-item-text{flex:1;line-height:1.5;}
+.hist-item-text.done{text-decoration:line-through;opacity:.4;}
+.hist-item-due{font-size:10px;color:var(--text3);font-family:var(--mono);flex-shrink:0;}
+
+/* 툴팁 */
+.tooltip-wrap{position:relative;display:inline-block;}
+.tooltip-wrap .tooltip-box{visibility:hidden;opacity:0;position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:#2a2520;color:#f5f4f0;font-size:11px;padding:4px 8px;border-radius:5px;white-space:nowrap;z-index:100;transition:opacity .15s;pointer-events:none;font-family:var(--mono);}
+.tooltip-wrap:hover .tooltip-box{visibility:visible;opacity:1;}
+
+/* modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border-radius:12px;padding:1.5rem;width:340px;max-width:90vw;}
+.modal-title{font-size:15px;font-weight:500;margin-bottom:1rem;}
+.modal-field{margin-bottom:12px;}
+.modal-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-family:var(--mono);}
+.modal-input{width:100%;font-size:13px;font-family:var(--sans);border:1px solid var(--border);border-radius:6px;padding:7px 10px;background:var(--surface2);color:var(--text);}
+.modal-input:focus{outline:none;border-color:var(--border2);}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;}
+.modal-cancel{font-family:var(--sans);font-size:13px;padding:7px 14px;background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text2);}
+.modal-submit{font-family:var(--sans);font-size:13px;padding:7px 18px;background:var(--accent);color:#f5f4f0;border:none;border-radius:6px;cursor:pointer;font-weight:500;}
+
+#toast{position:fixed;bottom:24px;right:24px;background:var(--accent);color:#f5f4f0;padding:10px 18px;border-radius:8px;font-size:13px;font-family:var(--sans);opacity:0;pointer-events:none;transition:opacity .25s;z-index:999;}
+#toast.show{opacity:1;}
+.loading{text-align:center;padding:3rem;color:var(--text3);font-family:var(--mono);font-size:12px;}
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:13px;line-height:2;}
+@media(max-width:700px){.buyer-grid{grid-template-columns:1fr;}}
+
+/* 읽기전용 모드 */
+body.readonly .btn-dark:not(.readonly-ok){pointer-events:none;opacity:.4;}
+body.readonly .ts-add-btn{pointer-events:none;opacity:.2;}
+body.readonly .ts-del{pointer-events:none;opacity:.1;}
+body.readonly .today-check{pointer-events:none;}
+body.readonly .del-buyer-btn{pointer-events:none;opacity:.1;}
+.readonly-banner{display:none;background:#fdf0dc;border-bottom:2px solid #f5cc80;padding:7px 2rem;font-size:12px;color:#7a4a08;font-weight:600;}
+body.readonly .readonly-banner{display:block;}
+</style>
+</head>
+<body>
+
+<!-- 로그인 화면 -->
+<div id="login-screen" style="display:flex;position:fixed;inset:0;background:var(--accent);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:0;">
+  <div style="background:var(--surface);border-radius:16px;padding:2.5rem 2rem;width:340px;max-width:90vw;box-shadow:0 8px 40px rgba(0,0,0,.25);">
+    <div style="font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--text3);margin-bottom:.5rem;">JUNGHWA / 해외영업부</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:1.5rem;">로그인</div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-family:var(--mono);">이메일</div>
+      <input id="login-email" type="email" style="width:100%;font-size:13px;font-family:var(--sans);border:1px solid var(--border);border-radius:6px;padding:8px 10px;background:var(--surface2);color:var(--text);" placeholder="이메일"/>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-family:var(--mono);">비밀번호</div>
+      <input id="login-pw" type="password" style="width:100%;font-size:13px;font-family:var(--sans);border:1px solid var(--border);border-radius:6px;padding:8px 10px;background:var(--surface2);color:var(--text);" placeholder="비밀번호"/>
+    </div>
+    <div id="login-err" style="font-size:12px;color:#c0392b;margin-bottom:10px;min-height:16px;"></div>
+    <button onclick="doLogin()" style="width:100%;font-family:var(--sans);font-size:14px;font-weight:500;padding:10px;background:var(--accent);color:#f5f4f0;border:none;border-radius:6px;cursor:pointer;">로그인</button>
+  </div>
+</div>
+
+<!-- 앱 전체 래퍼 -->
+<div id="app-screen" style="display:none;">
+
+<div class="readonly-banner">👁 열람 전용 계정입니다. 수정/삭제가 제한됩니다.</div>
+
+<header>
+  <div class="logo">JUNGHWA<span> / </span>해외영업부</div>
+  <div class="header-right">
+    <div class="live-label"><span class="live-dot"></span>실시간</div>
+    <div class="header-user" id="header-user-name"></div>
+    <button class="set-btn" onclick="doLogout()" style="opacity:.6;">로그아웃</button>
+  </div>
+</header>
+
+<nav class="page-tabs">
+  <button class="page-tab active" onclick="switchPage('today')">📋 오늘 할 일</button>
+  <button class="page-tab" onclick="switchPage('buyers')">🗂 바이어별 시트</button>
+  <button class="page-tab" onclick="switchPage('shipments')">🚢 출고일정</button>
+  <button class="page-tab" onclick="switchPage('issues')">⚠️ 이슈/불량</button>
+  <button class="page-tab" onclick="switchPage('imports')">📥 수입 건</button>
+  <button class="page-tab" onclick="switchPage('history')">📅 히스토리</button>
+</nav>
+
+<!-- ① 오늘 할 일 -->
+<div id="page-today">
+  <div class="today-top">
+    <div>
+      <div class="today-title">오늘 할 일</div>
+      <div class="today-date" id="today-date"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-dark btn-light" onclick="saveSnapshot()" style="font-size:12px;padding:7px 12px;">💾 일지 저장</button>
+      <button class="btn-dark btn-light" onclick="downloadDocx()" style="font-size:12px;padding:7px 12px;">📄 Word 다운로드</button>
+    </div>
+  </div>
+  <div class="today-summary" id="today-summary"></div>
+  <!-- 알림 배너 -->
+  <div id="today-alert-area" style="margin-bottom:1rem;"></div>
+  <div id="today-sheet"><div class="loading">로딩 중...</div></div>
+</div>
+
+<!-- ② 바이어별 시트 -->
+<div id="page-buyers">
+  <div class="buyers-top">
+    <div>
+      <div class="today-title">바이어별 업무 시트</div>
+      <div class="today-date">항목은 계속 누적됩니다</div>
+    </div>
+    <button class="btn-dark" onclick="openAddBuyer()">+ 바이어 추가</button>
+  </div>
+  <div class="buyer-grid" id="buyer-grid"><div class="loading">로딩 중...</div></div>
+</div>
+
+<!-- ③ 출고일정 -->
+<div id="page-shipments" style="padding:1.5rem 2rem;display:none;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px;">
+    <div>
+      <div class="today-title">출고일정</div>
+      <div class="today-date" id="shipment-month-label"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <select id="shipment-month-filter" onchange="renderShipments()" style="font-size:12px;font-family:var(--sans);border:1px solid var(--border);border-radius:6px;padding:5px 8px;background:var(--surface2);color:var(--text);"></select>
+      <button class="btn-dark" onclick="openShipmentModal()">+ 건 추가</button>
+    </div>
+  </div>
+  <div style="overflow-x:auto;">
+    <table id="shipment-table" style="width:100%;border-collapse:collapse;min-width:1100px;background:var(--surface);border-radius:10px;overflow:hidden;border:1px solid var(--border);">
+      <thead>
+        <tr style="background:#e8e6e0;">
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:40px;">순번</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:90px;">출고일</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:100px;">바이어명</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:110px;">P.O#</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:80px;">사이즈</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:55px;">P/I</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:65px;">선적서류</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:65px;">스케줄</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:65px;">라벨지</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:55px;">면장</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:55px;">배차</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:55px;">출고</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:75px;">선적/매출</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:65px;">B/L 발송</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:600;color:var(--text2);text-align:center;border:1px solid var(--border);width:70px;">비고</th>
+          <th style="padding:8px 6px;font-size:11px;border:1px solid var(--border);width:50px;"></th>
+        </tr>
+      </thead>
+      <tbody id="shipment-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ④ 이슈/불량 -->
+<div id="page-issues" style="padding:1.5rem 2rem;display:none;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px;">
+    <div>
+      <div class="today-title">이슈 / 불량 관리</div>
+      <div class="today-date">발생 건 누적 관리</div>
+    </div>
+    <button class="btn-dark" onclick="openIssueModal()">+ 이슈 등록</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;" id="issue-filter-bar">
+    <button class="btn-dark btn-light" style="font-size:12px;padding:5px 12px;" onclick="setIssueFilter('')" id="ifilter-all">전체</button>
+    <button class="btn-dark btn-light" style="font-size:12px;padding:5px 12px;background:#fff0ee;border-color:#f5b8b0;color:#c0392b;" onclick="setIssueFilter('진행중')">진행중</button>
+    <button class="btn-dark btn-light" style="font-size:12px;padding:5px 12px;background:#e4f2e8;border-color:#a8d9b5;color:#165c2a;" onclick="setIssueFilter('완료')">완료</button>
+  </div>
+  <div id="issue-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+</div>
+
+<!-- ⑤ 수입 건 -->
+<div id="page-imports" style="padding:1.5rem 2rem;display:none;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px;">
+    <div>
+      <div class="today-title">수입 건 관리</div>
+      <div class="today-date">수입 진행 현황</div>
+    </div>
+    <button class="btn-dark" onclick="openImportModal()">+ 수입 건 등록</button>
+  </div>
+  <div id="import-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+</div>
+
+<!-- ⑥ 히스토리 -->
+<div id="page-history">
+  <div class="hist-top">
+    <div>
+      <div class="today-title">저장된 일지 히스토리</div>
+      <div class="today-date" id="hist-sub"></div>
+    </div>
+    <div class="hist-filter">
+      <select id="hist-buyer-filter" onchange="renderHistory()"><option value="">전체 바이어</option></select>
+      <input type="date" id="hist-date-filter" onchange="renderHistory()"/>
+      <button class="btn-dark btn-light" style="font-size:12px;padding:5px 10px;" onclick="clearHistFilter()">초기화</button>
+    </div>
+  </div>
+  <div id="hist-list" class="hist-list"><div class="loading">로딩 중...</div></div>
+</div>
+
+<!-- 출고일정 등록 모달 -->
+<div class="modal-bg" id="modal-shipment">
+  <div class="modal" style="width:460px;">
+    <div class="modal-title" id="shipment-modal-title">출고 건 추가</div>
+    <input type="hidden" id="shipment-edit-key"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <div class="modal-label">바이어명</div>
+        <input class="modal-input" id="sh-buyer" list="buyer-suggest3" placeholder="예: CAL-ROYAL"/>
+        <datalist id="buyer-suggest3">
+          <option value="CAL-ROYAL"><option value="ALLEGION"><option value="LSDA-ATL">
+          <option value="LSDA-TOR"><option value="LSDA-VAN"><option value="PDQ">
+          <option value="ABS"><option value="S.PARKER"><option value="VIZPIN">
+          <option value="DORMA"><option value="DEXTER"><option value="METROTECH">
+        </datalist>
+      </div>
+      <div>
+        <div class="modal-label">P.O#</div>
+        <input class="modal-input" id="sh-po" placeholder="예: 50343"/>
+      </div>
+      <div>
+        <div class="modal-label">출고일</div>
+        <input class="modal-input" id="sh-shipdate" type="date"/>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <div class="modal-label">사이즈 (운송)</div>
+        <input class="modal-input" id="sh-size" list="sh-size-list" placeholder="예: LCL, 40FT, AIR"/>
+        <datalist id="sh-size-list">
+          <option value="LCL"><option value="20FT"><option value="40FT">
+          <option value="40FT * 2"><option value="40FT+20FT"><option value="AIR"><option value="UPS">
+        </datalist>
+      </div>
+      <div>
+        <div class="modal-label">월 (예: 2026-06)</div>
+        <input class="modal-input" id="sh-month" type="month"/>
+      </div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div class="modal-label">각 항목 상태 설정</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px;" id="sh-checks"></div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div class="modal-label">비고</div>
+      <input class="modal-input" id="sh-note" placeholder="특이사항"/>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal('modal-shipment')">취소</button>
+      <button class="modal-submit" onclick="saveShipment()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 이슈 등록 모달 -->
+<div class="modal-bg" id="modal-issue">
+  <div class="modal" style="width:420px;">
+    <div class="modal-title" id="issue-modal-title">이슈 등록</div>
+    <input type="hidden" id="issue-edit-key"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <div class="modal-label">바이어</div>
+        <input class="modal-input" id="issue-buyer" placeholder="예: VIZpin" list="buyer-suggest2"/>
+        <datalist id="buyer-suggest2">
+          <option value="Cal-Royal"><option value="Allegion"><option value="LSDA">
+          <option value="ABS"><option value="S.Parker"><option value="VIZpin">
+          <option value="PDQ"><option value="Korelock"><option value="Dorma">
+        </datalist>
+      </div>
+      <div>
+        <div class="modal-label">PO 번호</div>
+        <input class="modal-input" id="issue-po" placeholder="예: P.O#50343"/>
+      </div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <div class="modal-label">품목</div>
+      <input class="modal-input" id="issue-item" placeholder="예: Clutch Deadbolt US19"/>
+    </div>
+    <div style="margin-bottom:10px;">
+      <div class="modal-label">이슈 내용</div>
+      <textarea class="modal-input" id="issue-desc" rows="3" placeholder="불량 내용, 이슈 설명" style="resize:vertical;"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <div class="modal-label">발생일</div>
+        <input class="modal-input" id="issue-date" type="date"/>
+      </div>
+      <div>
+        <div class="modal-label">수량</div>
+        <input class="modal-input" id="issue-qty" placeholder="예: 25 pcs"/>
+      </div>
+      <div>
+        <div class="modal-label">상태</div>
+        <select class="modal-input" id="issue-status">
+          <option value="진행중">진행중</option>
+          <option value="완료">완료</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div>
+        <div class="modal-label">원인 파악</div>
+        <textarea class="modal-input" id="issue-cause" rows="3" placeholder="불량 원인 분석 내용" style="resize:vertical;"></textarea>
+      </div>
+      <div>
+        <div class="modal-label">조치 내용</div>
+        <textarea class="modal-input" id="issue-action" rows="3" placeholder="조치 및 처리 내용" style="resize:vertical;"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal('modal-issue')">취소</button>
+      <button class="modal-submit" onclick="saveIssue()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 수입 건 등록 모달 -->
+<div class="modal-bg" id="modal-import">
+  <div class="modal" style="width:420px;">
+    <div class="modal-title" id="import-modal-title">수입 건 등록</div>
+    <input type="hidden" id="import-edit-key"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <div class="modal-label">공급처 (Vendor)</div>
+        <input class="modal-input" id="import-vendor" placeholder="예: ACL Digital"/>
+      </div>
+      <div>
+        <div class="modal-label">품목</div>
+        <input class="modal-input" id="import-item" placeholder="예: PCBA 1,000pcs"/>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <div class="modal-label">발주일</div>
+        <input class="modal-input" id="import-order-date" type="date"/>
+      </div>
+      <div>
+        <div class="modal-label">출고예정일</div>
+        <input class="modal-input" id="import-expect-date" type="date"/>
+      </div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <div class="modal-label">Invoice / PO 번호</div>
+      <input class="modal-input" id="import-po" placeholder="예: INV-2026-001"/>
+    </div>
+    <div style="margin-bottom:10px;">
+      <div class="modal-label">금액 (USD)</div>
+      <input class="modal-input" id="import-amount" placeholder="예: 5,000.00"/>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <div class="modal-label">운송 방법</div>
+        <select class="modal-input" id="import-ship">
+          <option value="해운(LCL)">해운(LCL)</option>
+          <option value="해운(FCL)">해운(FCL)</option>
+          <option value="항공">항공</option>
+          <option value="특송(FedEx)">특송(FedEx)</option>
+          <option value="특송(DHL)">특송(DHL)</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      <div>
+        <div class="modal-label">상태</div>
+        <select class="modal-input" id="import-status">
+          <option value="발주">발주</option>
+          <option value="선적">선적</option>
+          <option value="입고완료">입고완료</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div class="modal-label">비고</div>
+      <textarea class="modal-input" id="import-note" rows="2" placeholder="특이사항, 메모" style="resize:vertical;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal('modal-import')">취소</button>
+      <button class="modal-submit" onclick="saveImport()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 바이어 추가 모달 -->
+<div class="modal-bg" id="modal-add">
+  <div class="modal">
+    <div class="modal-title">바이어 추가</div>
+    <div class="modal-field">
+      <div class="modal-label">바이어명</div>
+      <input class="modal-input" id="modal-buyer-name" placeholder="예: Cal-Royal" list="buyer-suggest"/>
+      <datalist id="buyer-suggest">
+        <option value="Cal-Royal"><option value="Allegion"><option value="LSDA">
+        <option value="ABS"><option value="S.Parker"><option value="VIZpin">
+        <option value="PDQ"><option value="Korelock"><option value="Dorma">
+        <option value="T.T Lock"><option value="김영무사장님">
+      </datalist>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal('modal-add')">취소</button>
+      <button class="modal-submit" onclick="confirmAddBuyer()">추가</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, onValue, remove, push, query, orderByChild } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDRuX-RtaQwiev7tmyT5ql3FoktAMCCsVk",
+  authDomain: "junghwa-5b82c.firebaseapp.com",
+  databaseURL: "https://junghwa-5b82c-default-rtdb.firebaseio.com",
+  projectId: "junghwa-5b82c",
+  storageBucket: "junghwa-5b82c.firebasestorage.app",
+  messagingSenderId: "789999759091",
+  appId: "1:789999759091:web:127ee15a625087a0475186"
+};
+
+// ── 계정 권한 설정 ──
+// 편집 가능 계정
+const EDIT_ACCOUNTS = {
+  'junghwa@junghwalock.com':  { name:'김정아', role:'editor' },
+  'jinho@junghwalock.com':    { name:'박진호', role:'editor' },
+};
+// 읽기 전용 계정
+const READONLY_ACCOUNTS = {
+  'ceo@junghwalock.com':      { name:'김석진 대표', role:'readonly' },
+  'director@junghwalock.com': { name:'이광택 전무', role:'readonly' },
+};
+const ALL_ACCOUNTS = { ...EDIT_ACCOUNTS, ...READONLY_ACCOUNTS };
+
+const app  = initializeApp(firebaseConfig);
+const db   = getDatabase(app);
+const auth = getAuth(app);
+const buyersRef    = ref(db, 'buyers');
+const logsRef      = ref(db, 'worklogs2');
+const issuesRef    = ref(db, 'issues');
+const importsRef   = ref(db, 'imports');
+const shipmentsRef = ref(db, 'shipments');
+
+let buyers    = {};
+let logs      = [];
+let issues    = [];
+let imports   = [];
+let shipments = [];
+let todayTypeFilter = '';
+let currentUser = null;  // { email, name, role }
+const todayStr = new Date().toISOString().split('T')[0];
+
+const TYPES      = ['reply-out','reply-in','memo'];
+const TYPE_LABEL = {'reply-out':'답변 나갈 것','reply-in':'답변 받아야 할 것','memo':'메모'};
+const TYPE_SHORT = {'reply-out':'답변↑','reply-in':'답변↓','memo':'메모'};
+const TYPE_CSS   = {'reply-out':'background:#e8edf5;color:#2a2520;','reply-in':'background:#f5f0e8;color:#2a2520;','memo':'background:#f1f0ea;color:#6b6960;'};
+
+function isReadonly(){ return currentUser && currentUser.role === 'readonly'; }
+
+// ── 로그인 ──
+onAuthStateChanged(auth, user => {
+  if(user){
+    const info = ALL_ACCOUNTS[user.email] || { name: user.email, role:'readonly' };
+    currentUser = { email: user.email, ...info };
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-screen').style.display='block';
+    document.getElementById('header-user-name').textContent = currentUser.name;
+    if(isReadonly()) document.body.classList.add('readonly');
+    else document.body.classList.remove('readonly');
+    startApp();
+  } else {
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('app-screen').style.display='none';
+    currentUser = null;
+  }
+});
+
+window.doLogin = async function(){
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  const errEl = document.getElementById('login-err');
+  errEl.textContent='';
+  try {
+    await signInWithEmailAndPassword(auth, email, pw);
+  } catch(e) {
+    errEl.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
+  }
+};
+
+window.doLogout = async function(){
+  if(!confirm('로그아웃 하시겠어요?')) return;
+  await signOut(auth);
+};
+
+document.addEventListener('keydown', e => {
+  if(e.key==='Enter' && document.getElementById('login-screen').style.display!=='none') doLogin();
+});
+
+function startApp(){
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+
+  onValue(buyersRef, snap=>{ buyers=snap.val()||{}; renderAll(); });
+  onValue(query(logsRef,orderByChild('ts')), snap=>{ logs=[]; snap.forEach(c=>logs.push({key:c.key,...c.val()})); logs.reverse(); renderHistory(); });
+  onValue(issuesRef, snap=>{
+    issues=[];
+    if(snap.exists()){ snap.forEach(c=>{ issues.push({key:c.key,...c.val()}); }); issues.sort((a,b)=>(b.ts||0)-(a.ts||0)); }
+    if(document.getElementById('issue-list')) renderIssues();
+  });
+  onValue(importsRef, snap=>{ imports=[]; snap.forEach(c=>imports.push({key:c.key,...c.val()})); imports.reverse(); renderImports(); renderTodayAlerts(); });
+  onValue(shipmentsRef, snap=>{ shipments=[]; snap.forEach(c=>shipments.push({key:c.key,...c.val()})); renderShipments(); renderTodayAlerts(); });
+
+  switchPage('today');
+}
+
+// ── 페이지 전환 ──
+let curPage='today';
+window.switchPage=function(p){
+  curPage=p;
+  document.querySelectorAll('.page-tab').forEach((t,i)=>t.classList.toggle('active',
+    (i===0&&p==='today')||(i===1&&p==='buyers')||(i===2&&p==='shipments')||(i===3&&p==='issues')||(i===4&&p==='imports')||(i===5&&p==='history')));
+  document.getElementById('page-today').style.display    =p==='today'    ?'block':'none';
+  document.getElementById('page-buyers').style.display   =p==='buyers'   ?'block':'none';
+  document.getElementById('page-shipments').style.display=p==='shipments'?'block':'none';
+  document.getElementById('page-issues').style.display   =p==='issues'   ?'block':'none';
+  document.getElementById('page-imports').style.display  =p==='imports'  ?'block':'none';
+  document.getElementById('page-history').style.display  =p==='history'  ?'block':'none';
+};
+
+function renderAll(){ renderToday(); renderBuyers(); }
+
+// ── 오늘 할 일 알림 배너 (출고일정 + 수입건 출고예정일) ──
+function renderTodayAlerts(){
+  const area = document.getElementById('today-alert-area');
+  if(!area) return;
+  const alerts = [];
+
+  // 출고일정 - 오늘 출고
+  shipments.forEach(s=>{
+    if(s.shipDate===todayStr && s.shipout!=='o'){
+      alerts.push(`🚢 <b>출고일정</b> — ${esc(s.buyer||'')} / ${esc(s.po||'')} 출고 당일`);
+    }
+  });
+
+  // 수입건 - 오늘 출고예정일
+  imports.forEach(imp=>{
+    if(imp.expectDate===todayStr && imp.status!=='입고완료'){
+      alerts.push(`📥 <b>수입 건</b> — ${esc(imp.vendor||'')} / ${esc(imp.item||'')} 출고예정일 당일`);
+    }
+  });
+
+  if(!alerts.length){ area.innerHTML=''; return; }
+  area.innerHTML=`<div style="background:#fdf0dc;border:2px solid #f5cc80;border-radius:10px;padding:12px 16px;margin-bottom:.5rem;">
+    <div style="font-size:13px;font-weight:700;color:#7a4a08;margin-bottom:6px;">🔔 오늘 처리 항목 ${alerts.length}건</div>
+    ${alerts.map(a=>`<div style="font-size:13px;color:#5a3a08;padding:3px 0;border-bottom:1px solid #f5e0a0;">${a}</div>`).join('')}
+  </div>`;
+}
+
+// ── 오늘 할 일 렌더 ──
+window.renderToday=function(){
+  renderTodayAlerts();
+  const entries = Object.entries(buyers);
+  const totals={'reply-out':0,'sample':0};
+  let overdueCount=0, doneCount=0, pendingCount=0;
+
+  const byBuyer=[];
+  entries.forEach(([bKey,b])=>{
+    const tasks=Object.entries(b.tasks||{});
+    const pending=tasks.filter(([,t])=>!t.done);
+    const done=tasks.filter(([,t])=>t.done);
+    doneCount+=done.length;
+    pendingCount+=pending.length;
+    pending.forEach(([,t])=>{
+      if(totals[t.type]!==undefined) totals[t.type]++;
+      if(t.dueDate&&t.dueDate<todayStr) overdueCount++;
+    });
+    // 할일이 있는 바이어만 포함 (미완료 pending 있을 때만)
+    if(pending.length) byBuyer.push({bKey,name:b.name,pending,done});
+  });
+
+  document.getElementById('today-summary').innerHTML=`
+    <div class="sum-chip chip-reply-out ${todayTypeFilter==='reply-out'?'selected':''}" onclick="setTodayFilter('reply-out')"><span class="num">${totals['reply-out']}</span> 답변 나갈 것</div>
+    ${overdueCount>0?`<div class="sum-chip chip-overdue ${todayTypeFilter==='overdue'?'selected':''}" onclick="setTodayFilter('overdue')"><span class="num">${overdueCount}</span> 기한 초과</div>`:''}
+    ${todayTypeFilter?'<div class="sum-chip" style="background:var(--surface2);color:var(--text2);border-color:var(--border);" onclick="setTodayFilter(\'\')">✕ 전체 보기</div>':''}`;
+
+  if(!byBuyer.length){
+    document.getElementById('today-sheet').innerHTML='<div class="empty">미완료 업무가 없습니다.<br><small style="color:var(--text3);">\"바이어별 시트\" 탭에서 항목을 입력하면 여기에 자동으로 표시됩니다.</small></div>';
+    return;
+  }
+
+  const sheetHtml = `
+    <div class="today-sheet">
+      <div class="today-sheet-head">
+        <span class="today-sheet-title">전체 미완료 업무</span>
+        <span class="today-sheet-meta">${pendingCount}건 남음 · ${doneCount}건 완료</span>
+      </div>
+      ${byBuyer.map(({bKey,name,pending,done})=>{
+        const sorted=[...pending]
+          .filter(([,t])=>{
+            if(!todayTypeFilter) return true;
+            if(todayTypeFilter==='overdue') return t.dueDate&&t.dueDate<todayStr;
+            return t.type===todayTypeFilter;
+          })
+          .sort((a,b)=>TYPES.indexOf(a[1].type)-TYPES.indexOf(b[1].type));
+
+        const pendingHtml=sorted.map(([tKey,t])=>{
+          const isOverdue=t.dueDate&&t.dueDate<todayStr;
+          const isDueToday=t.dueDate===todayStr;
+          const authorTip = t.author ? `작성: ${t.author}${t.updatedBy?' / 수정: '+t.updatedBy:''}` : '';
+          return `<div class="today-task-row${isOverdue?' overdue':''}" style="${isDueToday?'background:#ffeaea;border:1px solid #f5b8b0;border-radius:6px;padding:5px 8px;margin-bottom:2px;':''}">
+            <input type="checkbox" class="today-check" onchange="toggleTask('${bKey}','${tKey}',this.checked)"/>
+            <div class="today-task-body">
+              <span class="tooltip-wrap today-task-text" style="${isDueToday?'color:#c0392b;font-weight:700;':''}">${isDueToday?'🔴 ':''}${esc(t.text)}${authorTip?`<span class="tooltip-box">${esc(authorTip)}</span>`:''}</span>
+              <div class="today-task-meta">
+                <span class="type-badge" style="${TYPE_CSS[t.type]||''}">${TYPE_SHORT[t.type]||t.type}</span>
+                ${getDueLabel(t.dueDate)}
+                ${t.addedDate?`<span class="added-date">${t.addedDate}</span>`:''}
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+
+        return `<div class="today-buyer-block">
+          <div class="today-buyer-head">
+            <span class="today-buyer-name">${esc(name)}</span>
+            <span class="today-buyer-cnt">미완료 ${pending.length}건</span>
+          </div>
+          <div class="today-tasks">${pendingHtml||'<div style="font-size:12px;color:var(--text3);padding:4px 0;">미완료 없음</div>'}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  document.getElementById('today-sheet').innerHTML=sheetHtml;
+};
+
+// ── 바이어별 시트 렌더 ──
+window.renderBuyers=function(){
+  const grid=document.getElementById('buyer-grid');
+  const entries=Object.entries(buyers);
+  if(!entries.length){ grid.innerHTML='<div class="empty">바이어를 추가해 주세요.<br><small style="color:var(--text3);">상단 \"+ 바이어 추가\" 버튼으로 시작하세요.</small></div>'; return; }
+
+  grid.innerHTML=entries.map(([bKey,b])=>{
+    const tasks=Object.entries(b.tasks||{});
+    const pendingCnt=tasks.filter(([,t])=>!t.done&&t.type==='reply-out').length;
+
+    function makeItems(type){
+      const items=tasks.filter(([,t])=>t.type===type);
+      const pending=items.filter(([,t])=>!t.done);
+      const done=items.filter(([,t])=>t.done);
+      const all=[...pending,...done];
+      if(!all.length) return '<div style="font-size:12px;color:var(--text3);padding:6px 0;font-style:italic;">없음</div>';
+      return all.map(([tKey,t])=>{
+        const isDueToday=!t.done&&t.dueDate===todayStr;
+        const isOverdue=!t.done&&t.dueDate&&t.dueDate<todayStr;
+        const authorTip = t.author ? `작성: ${t.author}${t.updatedBy?' / 수정: '+t.updatedBy:''}` : '';
+        return `<div style="display:flex;align-items:flex-start;gap:7px;padding:6px 0;border-bottom:1px solid var(--border);${isDueToday?'background:#ffeaea;border-radius:5px;padding:6px 8px;border:1px solid #f5b8b0;margin-bottom:3px;':''}">
+          <input type="checkbox" class="ts-check" ${t.done?'checked':''} onchange="toggleTask('${bKey}','${tKey}',this.checked)" style="margin-top:3px;flex-shrink:0;"/>
+          <div style="flex:1;min-width:0;" class="tooltip-wrap">
+            <div style="font-size:13px;line-height:1.55;font-weight:${isDueToday?'600':'400'};color:${isDueToday?'#c0392b':t.done?'var(--text3)':'var(--text)'};${t.done?'text-decoration:line-through;':''}">
+              ${isDueToday?'🔴 ':''}${esc(t.text)}
+            </div>
+            ${t.dueDate||t.addedDate?`<div style="display:flex;gap:5px;margin-top:2px;flex-wrap:wrap;">
+              ${getDueLabel(t.dueDate)}
+              ${t.addedDate?`<span style="font-size:10px;color:var(--text3);font-family:var(--mono);">등록 ${t.addedDate}</span>`:''}
+            </div>`:''} 
+            ${authorTip?`<span class="tooltip-box">${esc(authorTip)}</span>`:''}
+          </div>
+          <button class="ts-del" onclick="deleteTask('${bKey}','${tKey}')">×</button>
+        </div>`;
+      }).join('');
+    }
+
+    function makeSection(type, label, borderColor){
+      const cnt=tasks.filter(([,t])=>t.type===type&&!t.done).length;
+      return `<div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:12px;font-weight:600;color:var(--text2);padding-left:8px;border-left:3px solid ${borderColor};">${label}${cnt>0?` <span style="font-weight:400;color:var(--text3);">(${cnt})</span>`:''}</span>
+          <button class="ts-add-btn" onclick="showInlineAdd('${bKey}','${type}')" style="background:none;border:none;cursor:pointer;font-size:16px;line-height:1;opacity:.5;padding:0 2px;color:var(--text);">+</button>
+        </div>
+        <div>${makeItems(type)}</div>
+        <div class="inline-add" id="add-${bKey}-${type}" style="margin-top:6px;">
+          <div class="ia-row1"><input type="text" placeholder="내용 입력 후 Enter" onkeydown="if(event.key==='Enter')submitInlineAdd('${bKey}','${type}',this)"/></div>
+          <div class="ia-row2"><label>기한</label><input type="date"/><button class="ia-btn" onclick="submitInlineAdd('${bKey}','${type}',this)">추가</button></div>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="buyer-card" id="bcard-${bKey}">
+      <div class="buyer-card-head">
+        <div class="buyer-name">${esc(b.name)}</div>
+        <div class="buyer-head-right">
+          <span class="buyer-stat">미완료 ${pendingCnt}건</span>
+          <button class="del-buyer-btn" onclick="deleteBuyer('${bKey}')">×</button>
+        </div>
+      </div>
+      ${makeSection('reply-out','답변 나갈 것','#5a8acf')}
+      ${makeSection('memo','메모','#aaa')}
+    </div>`;
+  }).join('');
+};
+
+// ── 히스토리 렌더 ──
+window.renderHistory=function(){
+  const buyerFilter=document.getElementById('hist-buyer-filter').value;
+  const dateFilter=document.getElementById('hist-date-filter').value;
+  const sel=document.getElementById('hist-buyer-filter');
+  const prev=sel.value;
+  const buyerNames=[...new Set(logs.flatMap(l=>(l.buyers||[]).map(b=>b.name)))];
+  sel.innerHTML='<option value="">전체 바이어</option>'+buyerNames.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  sel.value=prev;
+  let filtered=logs;
+  if(dateFilter) filtered=filtered.filter(l=>l.date===dateFilter);
+  document.getElementById('hist-sub').textContent=`총 ${filtered.length}건`;
+  const container=document.getElementById('hist-list');
+  if(!filtered.length){ container.innerHTML='<div class="empty">저장된 기록이 없습니다<br><small>\"오늘 할 일\" 탭에서 \"오늘 일지 저장\" 버튼을 누르면 기록됩니다.</small></div>'; return; }
+
+  container.innerHTML=filtered.map(log=>{
+    let bs=(log.buyers||[]);
+    if(buyerFilter) bs=bs.filter(b=>b.name===buyerFilter);
+    if(!bs.length) return '';
+    const allT=bs.flatMap(b=>(b.tasks||[]));
+    const pCnt=allT.filter(t=>!t.done).length;
+    const dCnt=allT.filter(t=>t.done).length;
+    const buyersHtml=bs.map(b=>{
+      const tasks=(b.tasks||[]).filter(t=>t.text);
+      if(!tasks.length) return '';
+      return `<div>
+        <div class="hist-buyer-name">${esc(b.name)}</div>
+        ${tasks.map(t=>`<div class="hist-item">
+          <span class="hist-type-badge" style="${TYPE_CSS[t.type]||''}">${TYPE_SHORT[t.type]||t.type}</span>
+          <span class="hist-item-text ${t.done?'done':''}">${esc(t.text)}</span>
+          ${t.dueDate?`<span class="hist-item-due">${t.dueDate}</span>`:''}
+        </div>`).join('')}
+      </div>`;
+    }).filter(Boolean).join('');
+    if(!buyersHtml) return '';
+    return `<div class="hist-day">
+      <div class="hist-day-head" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'flex':'none'">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="hist-day-date">${log.date}</span>
+          <span class="hist-day-cnt">미완료 ${pCnt} · 완료 ${dCnt} · ${esc(log.author||'')}</span>
+        </div>
+        <button onclick="event.stopPropagation();deleteLog('${log.key}')" style="font-size:11px;padding:2px 8px;background:none;border:1px solid #f5b8b0;border-radius:4px;cursor:pointer;color:#c0392b;font-family:var(--sans);">삭제</button>
+      </div>
+      <div class="hist-day-body" style="display:flex;flex-direction:column;">${buyersHtml}</div>
+    </div>`;
+  }).filter(Boolean).join('');
+};
+
+window.deleteLog=async function(key){
+  if(!confirm('이 히스토리를 삭제할까요?')) return;
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  await remove(ref(db,'worklogs2/'+key));
+  showToast('히스토리 삭제됨');
+};
+
+window.clearHistFilter=function(){ document.getElementById('hist-buyer-filter').value=''; document.getElementById('hist-date-filter').value=''; renderHistory(); };
+
+// ── CRUD ──
+window.openAddBuyer=()=>{ document.getElementById('modal-buyer-name').value=''; document.getElementById('modal-add').classList.add('open'); setTimeout(()=>document.getElementById('modal-buyer-name').focus(),100); };
+window.closeModal=id=>document.getElementById(id).classList.remove('open');
+
+window.confirmAddBuyer=async function(){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  const name=document.getElementById('modal-buyer-name').value.trim();
+  if(!name){ showToast('바이어명을 입력하세요'); return; }
+  await set(push(buyersRef),{name,tasks:{}}); closeModal('modal-add'); showToast(name+' 추가됨');
+};
+
+window.showInlineAdd=function(bKey,type){
+  const el=document.getElementById(`add-${bKey}-${type}`);
+  if(!el) return;
+  const isOpen=el.classList.contains('open');
+  document.querySelectorAll('.inline-add.open').forEach(e=>{if(e!==el)e.classList.remove('open');});
+  el.classList.toggle('open',!isOpen);
+  if(!isOpen) el.querySelector('input[type=text]').focus();
+};
+
+window.submitInlineAdd=async function(bKey,type,triggerEl){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  const wrap=document.getElementById(`add-${bKey}-${type}`);
+  const textInp=wrap.querySelector('input[type=text]');
+  const dateInp=wrap.querySelector('input[type=date]');
+  const text=textInp.value.trim();
+  if(!text) return;
+  await set(push(ref(db,`buyers/${bKey}/tasks`)),{
+    type, text, done:false,
+    addedDate:todayStr, dueDate:dateInp.value||'',
+    ts:Date.now(),
+    author: currentUser?.name || ''
+  });
+  textInp.value=''; dateInp.value=''; wrap.classList.remove('open');
+};
+
+window.toggleTask=async function(bKey,tKey,done){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  await set(ref(db,`buyers/${bKey}/tasks/${tKey}/done`),done);
+  await set(ref(db,`buyers/${bKey}/tasks/${tKey}/doneDate`),done?todayStr:'');
+  if(done) await set(ref(db,`buyers/${bKey}/tasks/${tKey}/updatedBy`), currentUser?.name||'');
+};
+
+window.deleteTask=async function(bKey,tKey){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  await remove(ref(db,`buyers/${bKey}/tasks/${tKey}`));
+};
+
+window.deleteBuyer=async function(bKey){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  if(!confirm('이 바이어를 삭제할까요?')) return;
+  await remove(ref(db,`buyers/${bKey}`));
+};
+
+window.setTodayFilter=function(type){
+  todayTypeFilter = todayTypeFilter===type ? '' : type;
+  renderToday();
+};
+
+window.saveSnapshot=async function(){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  const entries=Object.entries(buyers);
+  if(!entries.length){ showToast('저장할 데이터가 없습니다'); return; }
+  await set(push(logsRef),{
+    ts:Date.now(), date:todayStr, author:currentUser?.name||'미지정',
+    buyers:entries.map(([,b])=>({name:b.name,tasks:Object.values(b.tasks||{})}))
+  });
+  showToast('오늘 일지 저장됨');
+};
+
+window.downloadDocx=function(){
+  const entries=Object.entries(buyers);
+  if(!entries.length){ showToast('데이터가 없습니다'); return; }
+  const TYPE_FULL={'reply-out':'📤 답변 나갈 것','reply-in':'📥 답변 받아야 할 것','memo':'📝 메모'};
+  const rows=[];
+  entries.forEach(([,b])=>{
+    const tasks=Object.values(b.tasks||{});
+    const pending=tasks.filter(t=>!t.done);
+    const done=tasks.filter(t=>t.done);
+    if(!pending.length&&!done.length) return;
+    rows.push(`<w:tr><w:tc><w:tcPr><w:gridSpan w:val="3"/><w:shd w:val="clear" w:color="auto" w:fill="2a2520"/><w:tcMar><w:top w:w="80" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/></w:tcMar></w:tcPr><w:p><w:r><w:rPr><w:b/><w:color w:val="F5F4F0"/><w:sz w:val="24"/></w:rPr><w:t>${xmlEsc(b.name)}</w:t></w:r></w:p></w:tc></w:tr>`);
+    ['reply-out','memo'].forEach(type=>{
+      const items=pending.filter(t=>t.type===type);
+      if(!items.length) return;
+      rows.push(`<w:tr><w:tc><w:tcPr><w:gridSpan w:val="3"/><w:shd w:val="clear" w:color="auto" w:fill="${typeFill(type)}"/><w:tcMar><w:top w:w="40" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/></w:tcMar></w:tcPr><w:p><w:r><w:rPr><w:b/><w:sz w:val="18"/><w:color w:val="${typeColor(type)}"/></w:rPr><w:t>${xmlEsc(TYPE_FULL[type]||type)}</w:t></w:r></w:p></w:tc></w:tr>`);
+      items.forEach(t=>{
+        const due=t.dueDate?` (기한: ${t.dueDate})`:'';
+        const isOverdue=t.dueDate&&t.dueDate<todayStr;
+        rows.push(`<w:tr><w:tc><w:tcPr><w:tcW w:w="400" w:type="dxa"/><w:tcMar><w:left w:w="200" w:type="dxa"/></w:tcMar></w:tcPr><w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>☐</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="6000" w:type="dxa"/><w:tcMar><w:left w:w="120" w:type="dxa"/></w:tcMar></w:tcPr><w:p><w:r><w:rPr><w:sz w:val="20"/>${isOverdue?'<w:color w:val="C0392B"/>':''}</w:rPr><w:t xml:space="preserve">${xmlEsc(t.text)}</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/><w:tcMar><w:left w:w="120" w:type="dxa"/></w:tcMar></w:tcPr><w:p><w:r><w:rPr><w:sz w:val="16"/><w:color w:val="${isOverdue?'C0392B':'888780'}"/></w:rPr><w:t>${xmlEsc(due)}</w:t></w:r></w:p></w:tc></w:tr>`);
+      });
+    });
+    rows.push(`<w:tr><w:tc><w:tcPr><w:gridSpan w:val="3"/></w:tcPr><w:p/></w:tc></w:tr>`);
+  });
+
+  const docXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:rPr><w:b/><w:sz w:val="32"/></w:rPr><w:t>해외영업부 업무 일지</w:t></w:r></w:p><w:p><w:r><w:rPr><w:sz w:val="20"/><w:color w:val="888780"/></w:rPr><w:t>${todayStr} · ${currentUser?.name||''}</w:t></w:r></w:p><w:p/><w:tbl><w:tblPr><w:tblW w:w="9360" w:type="dxa"/><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="E0DED7"/><w:left w:val="single" w:sz="4" w:space="0" w:color="E0DED7"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="E0DED7"/><w:right w:val="single" w:sz="4" w:space="0" w:color="E0DED7"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="E0DED7"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="E0DED7"/></w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="400"/><w:gridCol w:w="6000"/><w:gridCol w:w="2960"/></w:tblGrid>${rows.join('')}</w:tbl><w:sectPr><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720"/></w:sectPr></w:body></w:document>`;
+  const relsXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+  const wordRelsXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/></Relationships>`;
+  const settingsXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:defaultTabStop w:val="720"/></w:settings>`;
+  const contentTypesXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/></Types>`;
+
+  const script=document.createElement('script');
+  script.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+  script.onload=function(){
+    const zip=new JSZip();
+    zip.file('[Content_Types].xml',contentTypesXml);
+    zip.file('_rels/.rels',relsXml);
+    zip.file('word/document.xml',docXml);
+    zip.file('word/_rels/document.xml.rels',wordRelsXml);
+    zip.file('word/settings.xml',settingsXml);
+    zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'})
+      .then(blob=>{ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`업무일지_${todayStr}.docx`; a.click(); URL.revokeObjectURL(url); showToast('Word 파일 다운로드 완료'); });
+  };
+  document.head.appendChild(script);
+};
+
+function typeFill(type){ const m={'reply-out':'EEF4FF','memo':'F5F4F0'}; return m[type]||'FFFFFF'; }
+function typeColor(type){ const m={'reply-out':'1A3A7A','memo':'6B6960'}; return m[type]||'1A1916'; }
+function xmlEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
+
+// ── 출고일정 ──
+const SH_COLS = ['pi','docs','schedule','label','customs','dispatch','shipout','sailing','bl'];
+const SH_COL_LABEL = {'pi':'P/I','docs':'선적서류','schedule':'스케줄','label':'라벨지','customs':'면장','dispatch':'배차','shipout':'출고','sailing':'선적/매출','bl':'B/L 발송'};
+
+function getStatusCell(val){
+  if(val==='o') return `<span style="color:#165c2a;font-size:16px;font-weight:700;">○</span>`;
+  if(val==='d') return `<span style="color:#7a4a08;font-size:16px;">△</span>`;
+  return '';
+}
+
+window.renderShipments=function(){
+  // 월 필터 옵션
+  const months=[...new Set(shipments.map(s=>s.month||'').filter(Boolean))].sort().reverse();
+  const selEl=document.getElementById('shipment-month-filter');
+  const prevMonth=selEl.value;
+  selEl.innerHTML='<option value="">전체</option>'+months.map(m=>`<option value="${m}">${m}</option>`).join('');
+  if(prevMonth) selEl.value=prevMonth;
+
+  const filterMonth=selEl.value;
+  let filtered=shipments;
+  if(filterMonth) filtered=filtered.filter(s=>s.month===filterMonth);
+
+  // 출고일 기준 오름차순 정렬 (빠른 날이 맨 위)
+  filtered=[...filtered].sort((a,b)=>{
+    const da=a.shipDate||'9999-99-99';
+    const db2=b.shipDate||'9999-99-99';
+    return da<db2?-1:da>db2?1:0;
+  });
+
+  document.getElementById('shipment-month-label').textContent=filterMonth?filterMonth+' 출고 건':'전체 출고 건 ('+filtered.length+'건)';
+
+  const tbody=document.getElementById('shipment-tbody');
+  if(!filtered.length){
+    tbody.innerHTML=`<tr><td colspan="16" style="text-align:center;padding:2rem;color:var(--text3);font-size:13px;">등록된 출고 건이 없습니다</td></tr>`;
+    return;
+  }
+
+  // 월별 그룹핑
+  const groups={};
+  filtered.forEach(s=>{
+    const m=s.month||s.shipDate?.slice(0,7)||'기타';
+    if(!groups[m]) groups[m]=[];
+    groups[m].push(s);
+  });
+  const sortedMonths=Object.keys(groups).sort();
+
+  let rowsHtml='';
+  let globalIdx=1;
+  sortedMonths.forEach(month=>{
+    // 월 구분 헤더행
+    rowsHtml+=`<tr><td colspan="16" style="background:#e8e6e0;padding:6px 12px;font-size:12px;font-weight:700;color:var(--text2);font-family:var(--mono);border:1px solid var(--border);">📅 ${month}</td></tr>`;
+    groups[month].forEach(s=>{
+      const isShipDone = s.shipout==='o';
+      const isShipToday = s.shipDate===todayStr;
+      const isShipSoon  = s.shipDate&&s.shipDate>todayStr&&Math.floor((new Date(s.shipDate)-new Date(todayStr))/864e5)<=3;
+      // 출고일 색상: 완료=검정, 오늘or예정=빨강, 나머지=기본
+      let dateColor = '';
+      if(isShipDone) dateColor='color:#1a1916;font-weight:600;';
+      else if(isShipToday||isShipSoon) dateColor='color:#c0392b;font-weight:700;';
+
+      const rowBg = isShipDone ? 'background:#f8f8f6;' : (globalIdx%2===0?'background:#fff;':'background:#fafaf8;');
+      const cells=SH_COLS.map(col=>{
+        const val=s[col]||'';
+        return `<td style="text-align:center;padding:6px 4px;border:1px solid var(--border);cursor:pointer;" onclick="cycleCell('${s.key}','${col}')">${getStatusCell(val)}</td>`;
+      }).join('');
+
+      rowsHtml+=`<tr style="${rowBg}">
+        <td style="text-align:center;padding:6px 8px;border:1px solid var(--border);font-size:12px;color:var(--text3);font-family:var(--mono);">${globalIdx}</td>
+        <td style="text-align:center;padding:6px 8px;border:1px solid var(--border);font-size:11px;font-family:var(--mono);${dateColor}">${s.shipDate||'-'}</td>
+        <td style="padding:6px 8px;border:1px solid var(--border);font-size:12px;font-weight:600;">${s.buyer||''}</td>
+        <td style="padding:6px 8px;border:1px solid var(--border);font-size:11px;font-family:var(--mono);">${s.po||''}</td>
+        <td style="text-align:center;padding:6px 8px;border:1px solid var(--border);font-size:11px;">${s.size||''}</td>
+        ${cells}
+        <td style="padding:6px 8px;border:1px solid var(--border);font-size:11px;color:var(--text2);">${s.note||''}</td>
+        <td style="text-align:center;padding:4px;border:1px solid var(--border);">
+          <button onclick="openShipmentModal('${s.key}')" style="font-size:11px;padding:2px 6px;background:none;border:1px solid var(--border);border-radius:3px;cursor:pointer;color:var(--text2);font-family:var(--sans);margin-bottom:2px;display:block;width:100%;">수정</button>
+          <button onclick="deleteShipment('${s.key}')" style="font-size:11px;padding:2px 6px;background:none;border:none;cursor:pointer;color:var(--text3);font-family:var(--sans);">삭제</button>
+        </td>
+      </tr>`;
+      globalIdx++;
+    });
+  });
+  tbody.innerHTML=rowsHtml;
+};
+
+window.cycleCell=async function(key,col){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  const s=shipments.find(x=>x.key===key);
+  if(!s) return;
+  const order=['','o','d'];
+  const cur=s[col]||'';
+  const next=order[(order.indexOf(cur)+1)%3];
+  await set(ref(db,'shipments/'+key+'/'+col), next);
+};
+
+window.openShipmentModal=function(key){
+  document.getElementById('shipment-edit-key').value=key||'';
+  document.getElementById('shipment-modal-title').textContent=key?'출고 건 수정':'출고 건 추가';
+  const defaultMonth=new Date().toISOString().slice(0,7);
+  if(key){
+    const s=shipments.find(x=>x.key===key);
+    if(s){
+      document.getElementById('sh-buyer').value=s.buyer||'';
+      document.getElementById('sh-po').value=s.po||'';
+      document.getElementById('sh-shipdate').value=s.shipDate||'';
+      document.getElementById('sh-size').value=s.size||'';
+      document.getElementById('sh-month').value=s.month||defaultMonth;
+      document.getElementById('sh-note').value=s.note||'';
+      buildShChecks(s);
+    }
+  } else {
+    ['sh-buyer','sh-po','sh-size','sh-note','sh-shipdate'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('sh-month').value=defaultMonth;
+    buildShChecks({});
+  }
+  document.getElementById('modal-shipment').classList.add('open');
+};
+
+function buildShChecks(s){
+  const wrap=document.getElementById('sh-checks');
+  wrap.innerHTML=SH_COLS.map(col=>{
+    const val=s[col]||'';
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+      <div style="font-size:10px;color:var(--text3);font-weight:600;">${SH_COL_LABEL[col]}</div>
+      <select id="shc-${col}" style="font-size:12px;font-family:var(--sans);border:1px solid var(--border);border-radius:4px;padding:3px 4px;width:100%;background:var(--surface2);">
+        <option value="" ${val===''?'selected':''}>-</option>
+        <option value="o" ${val==='o'?'selected':''}>○ 완료</option>
+        <option value="d" ${val==='d'?'selected':''}>△ 진행중</option>
+      </select>
+    </div>`;
+  }).join('');
+}
+
+window.saveShipment=async function(){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  const key=document.getElementById('shipment-edit-key').value;
+  const data={
+    buyer:document.getElementById('sh-buyer').value.trim(),
+    po:document.getElementById('sh-po').value.trim(),
+    shipDate:document.getElementById('sh-shipdate').value,
+    size:document.getElementById('sh-size').value.trim(),
+    month:document.getElementById('sh-month').value,
+    note:document.getElementById('sh-note').value.trim(),
+    ts:key?(shipments.find(x=>x.key===key)||{}).ts||Date.now():Date.now()
+  };
+  if(!data.buyer){showToast('바이어명을 입력하세요');return;}
+  SH_COLS.forEach(col=>{ data[col]=document.getElementById('shc-'+col)?.value||''; });
+  if(key) await set(ref(db,'shipments/'+key),data);
+  else await set(push(shipmentsRef),data);
+  closeModal('modal-shipment');
+  showToast('저장됐습니다');
+};
+
+window.deleteShipment=async function(key){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  if(!confirm('이 건을 삭제할까요?')) return;
+  await remove(ref(db,'shipments/'+key));
+};
+
+// ── 이슈 ──
+let issueFilter='';
+window.setIssueFilter=function(f){ issueFilter=f; renderIssues(); };
+
+window.openIssueModal=function(key){
+  document.getElementById('issue-edit-key').value=key||'';
+  document.getElementById('issue-modal-title').textContent=key?'이슈 수정':'이슈 등록';
+  if(key){
+    const iss=issues.find(i=>i.key===key);
+    if(iss){
+      document.getElementById('issue-buyer').value=iss.buyer||'';
+      document.getElementById('issue-po').value=iss.po||'';
+      document.getElementById('issue-item').value=iss.item||'';
+      document.getElementById('issue-desc').value=iss.desc||'';
+      document.getElementById('issue-date').value=iss.date||'';
+      document.getElementById('issue-qty').value=iss.qty||'';
+      document.getElementById('issue-status').value=iss.status||'진행중';
+      document.getElementById('issue-cause').value=iss.cause||'';
+      document.getElementById('issue-action').value=iss.action||'';
+    }
+  } else {
+    ['issue-buyer','issue-po','issue-item','issue-desc','issue-qty','issue-action','issue-cause'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('issue-date').value=todayStr;
+    document.getElementById('issue-status').value='진행중';
+  }
+  document.getElementById('modal-issue').classList.add('open');
+};
+
+window.saveIssue=async function(){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  const key=document.getElementById('issue-edit-key').value;
+  const data={
+    buyer:document.getElementById('issue-buyer').value.trim(),
+    po:document.getElementById('issue-po').value.trim(),
+    item:document.getElementById('issue-item').value.trim(),
+    desc:document.getElementById('issue-desc').value.trim(),
+    date:document.getElementById('issue-date').value,
+    qty:document.getElementById('issue-qty').value.trim(),
+    status:document.getElementById('issue-status').value,
+    cause:document.getElementById('issue-cause').value.trim(),
+    action:document.getElementById('issue-action').value.trim(),
+    ts:key?(issues.find(i=>i.key===key)||{}).ts||Date.now():Date.now(),
+    author: key ? (issues.find(i=>i.key===key)||{}).author||'' : currentUser?.name||''
+  };
+  if(!data.buyer||!data.desc){showToast('바이어와 이슈내용은 필수입니다');return;}
+  if(key){ data.updatedBy=currentUser?.name||''; await set(ref(db,'issues/'+key),data); }
+  else await set(push(issuesRef),data);
+  closeModal('modal-issue');
+  showToast('저장됐습니다');
+  renderIssues();
+};
+
+window.deleteIssue=async function(key){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  if(!confirm('삭제할까요?')) return;
+  await remove(ref(db,'issues/'+key));
+};
+
+window.renderIssues=function(){
+  const STATUS_STYLE={'진행중':'background:#fff0ee;color:#c0392b;border:1px solid #f5b8b0;','완료':'background:#e4f2e8;color:#165c2a;border:1px solid #a8d9b5;'};
+  let filtered=issues;
+  if(issueFilter) filtered=filtered.filter(i=>i.status===issueFilter);
+  const container=document.getElementById('issue-list');
+  if(!filtered.length){container.innerHTML='<div style="text-align:center;padding:3rem;color:var(--text3);font-size:13px;">등록된 이슈가 없습니다</div>';return;}
+  container.innerHTML=filtered.map(iss=>`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.75rem;gap:10px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:14px;font-weight:700;">${esc(iss.buyer||'')}</span>
+          ${iss.po?`<span style="font-size:11px;font-family:var(--mono);color:var(--text3);">${esc(iss.po)}</span>`:''}
+          <span style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;${STATUS_STYLE[iss.status]||''}">${esc(iss.status)}</span>
+          ${iss.author?`<span style="font-size:10px;color:var(--text3);font-family:var(--mono);">작성: ${esc(iss.author)}${iss.updatedBy?' / 수정: '+esc(iss.updatedBy):''}</span>`:''}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="openIssueModal('${iss.key}')" style="font-size:12px;padding:3px 8px;background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text2);font-family:var(--sans);">수정</button>
+          <button onclick="deleteIssue('${iss.key}')" style="font-size:12px;padding:3px 8px;background:none;border:none;cursor:pointer;color:var(--text3);font-family:var(--sans);">삭제</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono);margin-bottom:4px;">이슈 내용</div>
+          <div style="font-size:13px;line-height:1.6;">${esc(iss.desc||'')}</div>
+          ${iss.item?`<div style="font-size:11px;color:var(--text3);margin-top:3px;">품목: ${esc(iss.item)}</div>`:''}
+          ${iss.qty?`<div style="font-size:11px;color:var(--text3);">수량: ${esc(iss.qty)}</div>`:''}
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono);margin-bottom:4px;">원인 파악</div>
+          <div style="font-size:13px;line-height:1.6;">${esc(iss.cause||'')||'<span style="color:var(--text3);font-style:italic;">미입력</span>'}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono);margin-bottom:4px;">조치 내용</div>
+          <div style="font-size:13px;line-height:1.6;">${esc(iss.action||'')||'<span style="color:var(--text3);font-style:italic;">미입력</span>'}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:.75rem;">발생일: ${iss.date||'-'}</div>
+    </div>`).join('');
+};
+
+// ── 수입 건 ──
+window.openImportModal=function(key){
+  document.getElementById('import-edit-key').value=key||'';
+  document.getElementById('import-modal-title').textContent=key?'수입 건 수정':'수입 건 등록';
+  if(key){
+    const imp=imports.find(i=>i.key===key);
+    if(imp){
+      ['vendor','item','po','amount','note'].forEach(f=>document.getElementById('import-'+f).value=imp[f]||'');
+      document.getElementById('import-order-date').value=imp.orderDate||'';
+      document.getElementById('import-expect-date').value=imp.expectDate||'';
+      document.getElementById('import-ship').value=imp.ship||'해운(LCL)';
+      document.getElementById('import-status').value=imp.status||'발주';
+    }
+  } else {
+    ['import-vendor','import-item','import-po','import-amount','import-note'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('import-order-date').value=todayStr;
+    document.getElementById('import-expect-date').value='';
+    document.getElementById('import-ship').value='해운(LCL)';
+    document.getElementById('import-status').value='발주';
+  }
+  document.getElementById('modal-import').classList.add('open');
+};
+
+window.saveImport=async function(){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  const key=document.getElementById('import-edit-key').value;
+  const data={
+    vendor:document.getElementById('import-vendor').value.trim(),
+    item:document.getElementById('import-item').value.trim(),
+    po:document.getElementById('import-po').value.trim(),
+    amount:document.getElementById('import-amount').value.trim(),
+    orderDate:document.getElementById('import-order-date').value,
+    expectDate:document.getElementById('import-expect-date').value,
+    ship:document.getElementById('import-ship').value,
+    status:document.getElementById('import-status').value,
+    note:document.getElementById('import-note').value.trim(),
+    ts:key?(imports.find(i=>i.key===key)||{}).ts||Date.now():Date.now()
+  };
+  if(!data.vendor||!data.item){showToast('공급처와 품목은 필수입니다');return;}
+  if(key) await set(ref(db,'imports/'+key),data);
+  else await set(push(importsRef),data);
+  closeModal('modal-import');
+  showToast('저장됐습니다');
+};
+
+window.deleteImport=async function(key){
+  if(isReadonly()){ showToast('읽기 전용 계정입니다'); return; }
+  if(!confirm('삭제할까요?')) return;
+  await remove(ref(db,'imports/'+key));
+};
+
+window.renderImports=function(){
+  const STATUS_STYLE={
+    '발주':'background:#eef4ff;color:#1a3a7a;border:1px solid #b8cef5;',
+    '선적':'background:#fff3e0;color:#e65100;border:1px solid #ffcc80;',
+    '입고완료':'background:#e4f2e8;color:#165c2a;border:1px solid #a8d9b5;'
+  };
+  const container=document.getElementById('import-list');
+  if(!imports.length){container.innerHTML='<div style="text-align:center;padding:3rem;color:var(--text3);font-size:13px;">등록된 수입 건이 없습니다</div>';return;}
+  container.innerHTML=imports.map(imp=>{
+    const isExpectToday = imp.expectDate===todayStr && imp.status!=='입고완료';
+    const isExpectSoon  = imp.expectDate&&imp.expectDate>todayStr&&Math.floor((new Date(imp.expectDate)-new Date(todayStr))/864e5)<=7&&imp.status!=='입고완료';
+    const isExpectOver  = imp.expectDate&&imp.expectDate<todayStr&&imp.status!=='입고완료';
+    return `
+    <div style="background:var(--surface);border:1px solid ${isExpectToday?'#c0392b':isExpectOver?'#f5b8b0':isExpectSoon?'#f5cc80':'var(--border)'};border-radius:10px;padding:1rem 1.25rem;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.75rem;gap:10px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:14px;font-weight:700;">${esc(imp.vendor||'')}</span>
+          <span style="font-size:12px;color:var(--text2);">${esc(imp.item||'')}</span>
+          <span style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;${STATUS_STYLE[imp.status]||''}">${esc(imp.status)}</span>
+          ${isExpectToday?'<span style="font-size:11px;padding:2px 7px;border-radius:3px;background:#fff0ee;color:#c0392b;font-weight:600;">🔴 출고예정일 당일</span>':''}
+          ${isExpectOver?'<span style="font-size:11px;padding:2px 7px;border-radius:3px;background:#fff0ee;color:#c0392b;font-weight:600;">출고예정일 초과</span>':''}
+          ${isExpectSoon&&!isExpectOver&&!isExpectToday?'<span style="font-size:11px;padding:2px 7px;border-radius:3px;background:#fdf0dc;color:#7a4a08;font-weight:600;">출고예정 임박</span>':''}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="openImportModal('${imp.key}')" style="font-size:12px;padding:3px 8px;background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text2);font-family:var(--sans);">수정</button>
+          <button onclick="deleteImport('${imp.key}')" style="font-size:12px;padding:3px 8px;background:none;border:none;cursor:pointer;color:var(--text3);font-family:var(--sans);">삭제</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:12px;">
+        <div><div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:2px;">Invoice/PO</div>${esc(imp.po||'-')}</div>
+        <div><div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:2px;">금액</div>${esc(imp.amount?'$'+imp.amount:'-')}</div>
+        <div><div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:2px;">운송</div>${esc(imp.ship||'-')}</div>
+        <div><div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:2px;">발주일</div>${esc(imp.orderDate||'-')}</div>
+      </div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:16px;font-size:12px;">
+        <div><span style="color:var(--text3);">출고예정일 </span><span style="font-weight:500;${isExpectToday?'color:#c0392b;':isExpectOver?'color:#c0392b;':isExpectSoon?'color:#e65100;''}">${imp.expectDate||'-'}</span></div>
+        ${imp.note?`<div style="color:var(--text2);">📝 ${esc(imp.note)}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+};
+
+// ── 헬퍼 ──
+function getDueLabel(due){
+  if(!due) return '';
+  const diff=Math.floor((new Date(due)-new Date(todayStr))/(864e5));
+  if(diff<0)  return `<span class="due-badge due-over">D+${Math.abs(diff)} 초과 (${due})</span>`;
+  if(diff===0) return `<span class="due-badge due-soon">오늘 마감</span>`;
+  if(diff<=3)  return `<span class="due-badge due-soon">D-${diff} (${due})</span>`;
+  return `<span class="due-badge due-ok">D-${diff} (${due})</span>`;
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+</script>
+</div><!-- /app-screen -->
+</body>
+</html>
